@@ -63,8 +63,8 @@ export class Email {
    * Send welcome email
    */
   async sendWelcome(): Promise<void> {
-    const subject = "Welcome to the Natours Family!";
-    const text = `Hello ${this.firstName}, welcome to the Natours Family!`;
+    const subject = "Welcome to our clinic!";
+    const text = `Hello ${this.firstName}, welcome to our clinic!`;
     const html = `
       <div style="font-family:Arial,sans-serif;">
         <h2>Welcome, ${this.firstName}!</h2>

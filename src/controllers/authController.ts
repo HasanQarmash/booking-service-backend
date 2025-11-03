@@ -16,7 +16,21 @@ export class AuthController {
 
   register = asyncHandler(async (req, res) => {
     try {
+      // 1️⃣ Create the new user
       const newUser = await this.userModel.create(req.body);
+
+      // 2️⃣ Generate a frontend URL (for example, dashboard or welcome page)
+      const welcomeUrl = `${process.env.FRONTEND_URL}/customer/welcome`;
+
+      // 3️⃣ Send a welcome email (non-blocking)
+      try {
+        const emailService = new Email(newUser, welcomeUrl);
+        await emailService.sendWelcome();
+      } catch (err: any) {
+        console.error("⚠️ Failed to send welcome email:", err.message);
+      }
+
+      // 4️⃣ Send response + JWT
       createSendToken(newUser, 201, res, "User registered successfully");
     } catch (error: any) {
       if (error.code === "23505") {
