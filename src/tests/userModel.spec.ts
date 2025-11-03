@@ -430,7 +430,7 @@ describe("User Model", () => {
     it("should authenticate user with correct credentials", async () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
-        authTestUser.password
+        authTestUser.password!
       );
 
       expect(authenticated).toBeDefined();
@@ -460,7 +460,7 @@ describe("User Model", () => {
     it("should be case-sensitive for password", async () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
-        authTestUser.password.toLowerCase()
+        authTestUser.password!.toLowerCase()
       );
 
       expect(authenticated).toBeNull();
@@ -470,7 +470,7 @@ describe("User Model", () => {
       // PostgreSQL email comparison is case-insensitive
       const authenticated = await userModel.authenticate(
         authTestUser.email.toUpperCase(),
-        authTestUser.password
+        authTestUser.password!
       );
 
       // Should authenticate successfully regardless of email case
@@ -492,7 +492,7 @@ describe("User Model", () => {
     it("should return null for empty email", async () => {
       const authenticated = await userModel.authenticate(
         "",
-        authTestUser.password
+        authTestUser.password!
       );
 
       expect(authenticated).toBeNull();
@@ -509,7 +509,7 @@ describe("User Model", () => {
       await userModel.create(specialPassUser);
       const authenticated = await userModel.authenticate(
         specialPassUser.email,
-        specialPassUser.password
+        specialPassUser.password!
       );
 
       expect(authenticated).toBeDefined();
