@@ -166,7 +166,6 @@ export class User {
     );
     return result.rows[0] || null;
   }
-
   async delete(email: string): Promise<boolean> {
     const result = await this.pool.query("DELETE FROM users WHERE email = $1", [
       email,
