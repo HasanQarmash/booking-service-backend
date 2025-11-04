@@ -136,12 +136,13 @@ export class User {
     }
     const hashedPassword = await this.hashPassword(user.password);
     const result = await this.pool.query(
-      `INSERT INTO users ("full_name", "email", "phone","password") VALUES ($1, $2, $3, $4) RETURNING
+      `INSERT INTO users ("full_name", "email", "phone","birthday", "password") VALUES ($1, $2, $3, $4, $5) RETURNING
          id,
          "full_name",
          "email",
-         "phone"`,
-      [user.full_name, user.email, user.phone, hashedPassword],
+         "phone",
+          "birthday"`,
+      [user.full_name, user.email, user.phone,user.birthday, hashedPassword],
     );
     return result.rows[0];
   }
