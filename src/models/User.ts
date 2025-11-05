@@ -142,7 +142,7 @@ export class User {
          "email",
          "phone",
           "birthday"`,
-      [user.full_name, user.email, user.phone,user.birthday, hashedPassword],
+      [user.full_name, user.email, user.phone, user.birthday, hashedPassword],
     );
     return result.rows[0];
   }
