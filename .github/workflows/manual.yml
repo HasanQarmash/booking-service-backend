@@ -1,12 +1,13 @@
 # Workflow to ensure whenever a Github PR is submitted, 
 # a JIRA ticket gets created automatically. 
-name: Manual Workflow
+# DISABLED: This workflow is disabled because JIRA integration is not configured
+name: Manual Workflow (Disabled)
 
 # Controls when the action will run. 
 on:
   # Triggers the workflow on pull request events but only for the master branch
-  pull_request_target:
-    types: [opened, reopened]
+  # pull_request_target:
+  #   types: [opened, reopened]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
