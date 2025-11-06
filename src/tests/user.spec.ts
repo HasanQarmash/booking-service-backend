@@ -20,6 +20,7 @@ describe("User & Auth API Endpoints", () => {
         full_name: "Alice",
         email: "example@test.com",
         phone: "0599123456",
+        user_role: "client",
         password: "hashed_password_123",
       });
 
@@ -39,6 +40,7 @@ describe("User & Auth API Endpoints", () => {
         full_name: "Duplicate Alice",
         email: "example@test.com",
         phone: "0599111111",
+        user_role: "client",
         password: "another_password_123",
       });
 
@@ -49,6 +51,7 @@ describe("User & Auth API Endpoints", () => {
     it("should return 400 when required fields are missing", async () => {
       const res = await request.post("/api/auth/register").send({
         email: "missing@test.com",
+        user_role: "client",
         password: "new_password",
       });
 
@@ -61,6 +64,7 @@ describe("User & Auth API Endpoints", () => {
         full_name: "Bob",
         email: "bob@test.com",
         phone: "0599234567",
+        user_role: "client",
         password: "1234",
       });
 
@@ -75,6 +79,7 @@ describe("User & Auth API Endpoints", () => {
         full_name: "Charlie",
         email: "charlie@test.com",
         phone: "0123456789", // Invalid
+        user_role: "client",
         password: "securePassword",
       });
 
@@ -89,6 +94,7 @@ describe("User & Auth API Endpoints", () => {
         full_name: "Dana",
         email: "invalid-email",
         phone: "0599123456",
+        user_role: "client",
         password: "securePassword",
       });
 
@@ -102,6 +108,7 @@ describe("User & Auth API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: "example@test.com",
         password: "hashed_password_123",
+        user_role: "client",
       });
 
       expect(res.status).toBe(200);
@@ -113,6 +120,7 @@ describe("User & Auth API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: "",
         password: "",
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);
@@ -123,6 +131,7 @@ describe("User & Auth API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: "example@test.com",
         password: "wrongpassword",
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);

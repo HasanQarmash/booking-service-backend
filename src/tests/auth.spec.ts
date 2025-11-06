@@ -30,6 +30,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "John Doe",
         email: "john.doe@test.com",
         phone: "0599123456",
+        user_role: "client",
         password: "SecurePass123",
       });
 
@@ -61,6 +62,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Jane Doe",
         email: "john.doe@test.com", // Duplicate email
         phone: "0599234567",
+        user_role: "client",
         password: "AnotherPass123",
       });
 
@@ -72,6 +74,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/register").send({
         email: "missing.name@test.com",
         phone: "0599234567",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -83,6 +86,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/register").send({
         full_name: "Missing Email User",
         phone: "0599234567",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -94,6 +98,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/register").send({
         full_name: "Missing Password User",
         email: "missing.password@test.com",
+        user_role: "client",
         phone: "0599234567",
       });
 
@@ -105,6 +110,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/register").send({
         full_name: "Missing Phone User",
         email: "missing.phone@test.com",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -117,6 +123,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Invalid Email User",
         email: "not-an-email",
         phone: "0599234567",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -128,6 +135,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/register").send({
         full_name: "Short Password User",
         email: "short.pass@test.com",
+        user_role: "client",
         phone: "0599234567",
         password: "Pass12",
       });
@@ -143,6 +151,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Invalid Phone User",
         email: "invalid.phone@test.com",
         phone: "1234567890", // Invalid format
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -157,6 +166,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Wrong Length Phone User",
         email: "wrong.length@test.com",
         phone: "05991234", // Too short (8 digits)
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -171,6 +181,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Valid Phone 059 User",
         email: "valid.059@test.com",
         phone: "0599876543",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -183,6 +194,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Valid Phone 056 User",
         email: "valid.056@test.com",
         phone: "0569876543",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -198,6 +210,7 @@ describe("Authentication API Endpoints", () => {
     it("should login successfully with correct credentials", async () => {
       const res = await request.post("/api/auth/login").send({
         email: registeredUserEmail,
+        user_role: "client",
         password: "SecurePass123",
       });
 
@@ -219,6 +232,7 @@ describe("Authentication API Endpoints", () => {
     it("should return 400 when email is missing", async () => {
       const res = await request.post("/api/auth/login").send({
         password: "SecurePass123",
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);
@@ -230,6 +244,7 @@ describe("Authentication API Endpoints", () => {
     it("should return 400 when password is missing", async () => {
       const res = await request.post("/api/auth/login").send({
         email: registeredUserEmail,
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);
@@ -251,6 +266,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: registeredUserEmail,
         password: "WrongPassword123",
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);
@@ -261,6 +277,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: registeredUserEmail,
         password: "securepass123", // Different case
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);
@@ -374,6 +391,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: registeredUserEmail,
         password: "SecurePass123",
+        user_role: "client",
       });
 
       if (res.status === 200) {
@@ -421,6 +439,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Security Test User",
         email: "security.test@test.com",
         phone: "0599111222",
+        user_role: "client",
         password: "SecurePassword123",
       });
 
@@ -432,6 +451,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: "security.test@test.com",
         password: "SecurePassword123",
+        user_role: "client",
       });
 
       expect(res.status).toBe(200);
@@ -444,6 +464,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Hash Test User",
         email: "hash.test@test.com",
         phone: "0599333444",
+        user_role: "client",
         password: plainPassword,
       });
 
@@ -464,6 +485,7 @@ describe("Authentication API Endpoints", () => {
       const res = await request.post("/api/auth/login").send({
         email: "' OR '1'='1",
         password: "' OR '1'='1",
+        user_role: "client",
       });
 
       expect(res.status).toBe(400);
@@ -475,6 +497,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "SQL Injection'; DROP TABLE users; --",
         email: "sqlinjection@test.com",
         phone: "0599555666",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -496,6 +519,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Ab", // Minimum 2 characters
         email: "a@b.co",
         phone: "0599000000",
+        user_role: "client",
         password: "12345678",
       });
 
@@ -509,6 +533,7 @@ describe("Authentication API Endpoints", () => {
         full_name: longName,
         email: "long.name@test.com",
         phone: "0599777888",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -521,6 +546,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Jean-Pierre O'Connor III",
         email: "special.chars@test.com",
         phone: "0599888999",
+        user_role: "client",
         password: "ValidPass123",
       });
 
@@ -534,6 +560,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "Special Pass User",
         email: "special.pass@test.com",
         phone: "0598111222",
+        user_role: "client",
         password: specialPassword,
       });
 
@@ -543,6 +570,7 @@ describe("Authentication API Endpoints", () => {
       const loginRes = await request.post("/api/auth/login").send({
         email: "special.pass@test.com",
         password: specialPassword,
+        user_role: "client",
       });
 
       expect(loginRes.status).toBe(200);
@@ -553,6 +581,7 @@ describe("Authentication API Endpoints", () => {
         full_name: "محمد أحمد",
         email: "arabic.name@test.com",
         phone: "0598222333",
+        user_role: "client",
         password: "ValidPass123",
       });
 

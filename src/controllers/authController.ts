@@ -41,13 +41,13 @@ export class AuthController {
   });
 
   login = asyncHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const { email, password, user_role } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password || !user_role) {
       throw new ValidationError("Missing required fields: email or password");
     }
 
-    const user = await this.userModel.authenticate(email, password);
+    const user = await this.userModel.authenticate(email, password, user_role);
     if (!user) {
       throw new ValidationError("Invalid credentials");
     }

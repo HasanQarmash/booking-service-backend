@@ -11,6 +11,7 @@ describe("User Model", () => {
     email: "testuser@example.com",
     phone: "0599123456",
     password: "TestPassword123",
+    user_role: "client",
   };
 
   beforeAll(async () => {
@@ -47,6 +48,7 @@ describe("User Model", () => {
         email: "hashtest@example.com",
         phone: "0599234567",
         password: "PlainPassword123",
+        user_role: "client",
       };
 
       await userModel.create(user);
@@ -69,6 +71,7 @@ describe("User Model", () => {
         email: "unique1@example.com",
         phone: "0599345678",
         password: "Password123",
+        user_role: "client",
       };
 
       const user2: IUser = {
@@ -76,6 +79,7 @@ describe("User Model", () => {
         email: "unique2@example.com",
         phone: "0599456789",
         password: "Password456",
+        user_role: "client",
       };
 
       const created1 = await userModel.create(user1);
@@ -91,6 +95,7 @@ describe("User Model", () => {
         email: testUserData.email, // Same email as first test
         phone: "0599567890",
         password: "AnotherPassword123",
+        user_role: "client",
       };
 
       await expectAsync(userModel.create(duplicateUser)).toBeRejected();
@@ -102,6 +107,7 @@ describe("User Model", () => {
         email: "special.chars@example.com",
         phone: "0599678901",
         password: "P@ssw0rd!#$%",
+        user_role: "client",
       };
 
       const created = await userModel.create(specialUser);
@@ -116,6 +122,7 @@ describe("User Model", () => {
         email: "unicode@example.com",
         phone: "0599789012",
         password: "Password123",
+        user_role: "client",
       };
 
       const created = await userModel.create(unicodeUser);
@@ -137,6 +144,7 @@ describe("User Model", () => {
         email: "user1@getall.com",
         phone: "0598111111",
         password: "Password123",
+        user_role: "client",
       });
 
       await userModel.create({
@@ -144,6 +152,7 @@ describe("User Model", () => {
         email: "user2@getall.com",
         phone: "0598222222",
         password: "Password123",
+        user_role: "client",
       });
     });
 
@@ -227,6 +236,7 @@ describe("User Model", () => {
         email: "test+tag@example.com",
         phone: "0598333333",
         password: "Password123",
+        user_role: "client",
       };
 
       await userModel.create(specialEmailUser);
@@ -247,6 +257,7 @@ describe("User Model", () => {
         email: testUserData.email, // Email is used to find user
         phone: "0598444444",
         password: "NewPassword123",
+        user_role: "client",
       };
 
       const updated = await userModel.update(testUserData.email, updatedData);
@@ -265,6 +276,7 @@ describe("User Model", () => {
         email: testUserData.email,
         phone: "0598444444",
         password: newPassword,
+        user_role: "client",
       };
 
       await userModel.update(testUserData.email, updateData);
@@ -286,6 +298,7 @@ describe("User Model", () => {
         email: "nonexistent@example.com",
         phone: "0598555555",
         password: "Password123",
+        user_role: "client",
       };
 
       const result = await userModel.update("nonexistent@example.com", updateData);
@@ -299,6 +312,7 @@ describe("User Model", () => {
         email: testUserData.email,
         phone: "0598666666",
         password: "SecretPassword123",
+        user_role: "client",
       };
 
       const updated = await userModel.update(testUserData.email, updateData);
@@ -314,6 +328,7 @@ describe("User Model", () => {
         email: originalEmail,
         phone: "0598777777",
         password: "Password123",
+        user_role: "client",
       };
 
       const updated = await userModel.update(originalEmail, updateData);
@@ -327,6 +342,7 @@ describe("User Model", () => {
         email: testUserData.email,
         phone: "0598888888",
         password: "Password123",
+        user_role: "client",
       };
 
       const updated = await userModel.update(testUserData.email, updateData);
@@ -345,6 +361,7 @@ describe("User Model", () => {
         email: "delete@example.com",
         phone: "0598999999",
         password: "Password123",
+        user_role: "client",
       };
 
       await userModel.create(userToDelete);
@@ -369,6 +386,7 @@ describe("User Model", () => {
         email: "keep1@example.com",
         phone: "0597111111",
         password: "Password123",
+        user_role: "client",
       };
 
       const user2: IUser = {
@@ -376,6 +394,7 @@ describe("User Model", () => {
         email: "keep2@example.com",
         phone: "0597222222",
         password: "Password123",
+        user_role: "client",
       };
 
       await userModel.create(user1);
@@ -397,6 +416,7 @@ describe("User Model", () => {
         email: "casedelete@example.com",
         phone: "0597333333",
         password: "Password123",
+        user_role: "client",
       };
 
       await userModel.create(userToDelete);
@@ -421,6 +441,7 @@ describe("User Model", () => {
       email: "authtest@example.com",
       phone: "0597444444",
       password: "AuthPassword123",
+      user_role: "client",
     };
 
     beforeAll(async () => {
@@ -430,7 +451,8 @@ describe("User Model", () => {
     it("should authenticate user with correct credentials", async () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
-        authTestUser.password!
+        authTestUser.password!,
+        authTestUser.user_role
       );
 
       expect(authenticated).toBeDefined();
@@ -442,7 +464,8 @@ describe("User Model", () => {
     it("should return null for incorrect password", async () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
-        "WrongPassword123"
+        "WrongPassword123",
+        authTestUser.user_role
       );
 
       expect(authenticated).toBeNull();
@@ -451,7 +474,8 @@ describe("User Model", () => {
     it("should return null for non-existent email", async () => {
       const authenticated = await userModel.authenticate(
         "nonexistent@example.com",
-        "SomePassword123"
+        "SomePassword123",
+        "client"
       );
 
       expect(authenticated).toBeNull();
@@ -460,7 +484,8 @@ describe("User Model", () => {
     it("should be case-sensitive for password", async () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
-        authTestUser.password!.toLowerCase()
+        authTestUser.password!.toLowerCase(),
+        authTestUser.user_role
       );
 
       expect(authenticated).toBeNull();
@@ -470,7 +495,8 @@ describe("User Model", () => {
       // PostgreSQL email comparison is case-insensitive
       const authenticated = await userModel.authenticate(
         authTestUser.email.toUpperCase(),
-        authTestUser.password!
+        authTestUser.password!,
+        authTestUser.user_role
       );
 
       // Should authenticate successfully regardless of email case
@@ -483,7 +509,8 @@ describe("User Model", () => {
     it("should return null for empty password", async () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
-        ""
+        "",
+        authTestUser.user_role
       );
 
       expect(authenticated).toBeNull();
@@ -492,7 +519,8 @@ describe("User Model", () => {
     it("should return null for empty email", async () => {
       const authenticated = await userModel.authenticate(
         "",
-        authTestUser.password!
+        authTestUser.password!,
+        authTestUser.user_role
       );
 
       expect(authenticated).toBeNull();
@@ -504,12 +532,14 @@ describe("User Model", () => {
         email: "specialauth@example.com",
         phone: "0597555555",
         password: "P@ssw0rd!#$%^&*()",
+        user_role: "client",
       };
 
       await userModel.create(specialPassUser);
       const authenticated = await userModel.authenticate(
         specialPassUser.email,
-        specialPassUser.password!
+        specialPassUser.password!,
+        specialPassUser.user_role
       );
 
       expect(authenticated).toBeDefined();
@@ -530,6 +560,7 @@ describe("User Model", () => {
       email: "resettest@example.com",
       phone: "0597666666",
       password: "ResetPassword123",
+      user_role: "client",
     };
 
     beforeAll(async () => {
@@ -641,6 +672,7 @@ describe("User Model", () => {
         email: longEmail,
         phone: "0597777777",
         password: "Password123",
+        user_role: "client",
       };
 
       const created = await userModel.create(user);
@@ -658,6 +690,7 @@ describe("User Model", () => {
         email: "longname@example.com",
         phone: "0597888888",
         password: "Password123",
+        user_role: "client",
       };
 
       const created = await userModel.create(user);
@@ -674,6 +707,7 @@ describe("User Model", () => {
         email: "peppertest@example.com",
         phone: "0597999999",
         password: password,
+        user_role: "client",
       };
 
       await userModel.create(user);
@@ -690,7 +724,7 @@ describe("User Model", () => {
       expect(directCompare).toBe(false); // Should fail without pepper
 
       // But authenticate should work (it uses pepper)
-      const authenticated = await userModel.authenticate(user.email, password);
+      const authenticated = await userModel.authenticate(user.email, password, user.user_role);
       expect(authenticated).not.toBeNull();
       expect(authenticated!.email).toBe(user.email);
 
@@ -705,18 +739,21 @@ describe("User Model", () => {
           email: "concurrent1@example.com",
           phone: "0596111111",
           password: "Password123",
+          user_role: "client",
         },
         {
           full_name: "Concurrent User 2",
           email: "concurrent2@example.com",
           phone: "0596222222",
           password: "Password123",
+          user_role: "client",
         },
         {
           full_name: "Concurrent User 3",
           email: "concurrent3@example.com",
           phone: "0596333333",
           password: "Password123",
+          user_role: "client",
         },
       ];
 
