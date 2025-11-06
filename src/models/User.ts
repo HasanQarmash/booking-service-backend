@@ -11,6 +11,7 @@ export interface IUser {
   full_name: string;
   email: string;
   phone?: string;
+  user_role: string;
   birthday?: Date; // optional birthday field
   password?: string; // store the hashed password (optional for OAuth users)
   passwordResetToken?: string | null;
@@ -28,7 +29,7 @@ export class User {
   private pepper = process.env.BCRYPT_PASSWORD || "";
   private saltRounds = parseInt(process.env.SALT_ROUNDS || "10", 10);
 
-  constructor(public pool: Pool) { }
+  constructor(public pool: Pool) {}
   private async hashPassword(password: string): Promise<string> {
     const saltedPassword = password + this.pepper;
     const salt = await bcrypt.genSalt(this.saltRounds);
@@ -136,13 +137,21 @@ export class User {
     }
     const hashedPassword = await this.hashPassword(user.password);
     const result = await this.pool.query(
-      `INSERT INTO users ("full_name", "email", "phone","birthday", "password") VALUES ($1, $2, $3, $4, $5) RETURNING
+      `INSERT INTO users ("full_name", "email", "phone","birthday", "user_role", "password") VALUES ($1, $2, $3, $4, $5, $6) RETURNING
          id,
          "full_name",
          "email",
          "phone",
-          "birthday"`,
-      [user.full_name, user.email, user.phone, user.birthday, hashedPassword],
+         "birthday",
+         "user_role"`,
+      [
+        user.full_name,
+        user.email,
+        user.phone,
+        user.birthday,
+        user.user_role,
+        hashedPassword,
+      ],
     );
     return result.rows[0];
   }
@@ -174,12 +183,16 @@ export class User {
     return result.rowCount! > 0;
   }
 
-  async authenticate(email: string, password: string): Promise<IUser | null> {
+  async authenticate(
+    email: string,
+    password: string,
+    user_role: string,
+  ): Promise<IUser | null> {
     const result = await this.pool.query(
-      `SELECT id, "full_name", "email", "phone", "password"
+      `SELECT id, "full_name", "email", "phone", "password", "user_role"
         FROM users
-        WHERE "email" = $1`,
-      [email],
+        WHERE "email" = $1 and "user_role" = $2`,
+      [email, user_role],
     );
 
     const user = result.rows[0];
@@ -204,7 +217,7 @@ export class User {
          "profile_picture" as "profile_picture"
        FROM users
        WHERE id = $1`,
-      [id]
+      [id],
     );
     return result.rows[0] || null;
   }
@@ -221,7 +234,7 @@ export class User {
          "profile_picture" as "profile_picture"
        FROM users
        WHERE "google_id" = $1`,
-      [googleId]
+      [googleId],
     );
     return result.rows[0] || null;
   }
@@ -238,7 +251,7 @@ export class User {
          "profile_picture" as "profile_picture"
        FROM users
        WHERE email = $1`,
-      [email]
+      [email],
     );
     return result.rows[0] || null;
   }
@@ -246,7 +259,7 @@ export class User {
   static async linkGoogleAccount(
     userId: string,
     googleId: string,
-    profilePicture?: string
+    profilePicture?: string,
   ): Promise<IUser> {
     const result = await pool.query(
       `UPDATE users
@@ -262,7 +275,7 @@ export class User {
          "google_id" as "googleId",
          "auth_provider" as "authProvider",
          "profile_picture" as "profile_picture"`,
-      [googleId, profilePicture, userId]
+      [googleId, profilePicture, userId],
     );
     return result.rows[0];
   }
@@ -290,8 +303,14 @@ export class User {
          "google_id" as "googleId",
          "auth_provider" as "authProvider",
          "profile_picture" as "profile_picture"`,
-      [userData.full_name, userData.email, userData.googleId, userData.profilePicture]
+      [
+        userData.full_name,
+        userData.email,
+        userData.googleId,
+        userData.profilePicture,
+      ],
     );
     return result.rows[0];
   }
 }
+
