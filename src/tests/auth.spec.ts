@@ -42,6 +42,7 @@ describe("Authentication API Endpoints", () => {
       expect(res.body.user.email).toBe("john.doe@test.com");
       expect(res.body.user.phone).toBe("0599123456");
       expect(res.body.user.id).toBeDefined();
+
       expect(res.body.user.password).toBeUndefined(); // Password should not be returned
       expect(res.body.token).toBeDefined();
 

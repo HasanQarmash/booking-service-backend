@@ -13,6 +13,8 @@ export const createSendToken = (
     full_name: user.full_name,
     email: user.email,
     phone: user.phone,
+    birthday: user.birthday,
+    user_role: user.user_role,
   });
 
   // Optional cookie setup
@@ -32,6 +34,8 @@ export const createSendToken = (
       full_name: user.full_name,
       email: user.email,
       phone: user.phone,
+      birthday: user.birthday,
+      user_role: user.user_role,
     },
   });
 };
