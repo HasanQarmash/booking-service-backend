@@ -13,7 +13,7 @@ export class AuthController {
   register = asyncHandler(async (req, res) => {
     try {
       // 1️⃣ Create the new user
-      const newUser = await this.userModel.create(req.body);
+      const newUser = await this.userModel.create(req.body, req);
 
       // 2️⃣ Generate a frontend URL (for example, dashboard or welcome page)
       const welcomeUrl = `${process.env.FRONTEND_URL}/customer/welcome`;

@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import pool from "../config/database";
+import { Request } from "express";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ export interface IUser {
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
   isEmailVerified?: boolean;
+  domain?: string;
   status?: "pending" | "active" | "disabled";
   createdAt?: Date;
   updatedAt?: Date;
@@ -123,22 +125,86 @@ export class User {
     return result.rows[0] || null;
   }
 
-  async create(user: IUser): Promise<IUser> {
+  async create(user: IUser, req: Request): Promise<IUser> {
     if (!user.password) {
       throw new Error("Password is required for local authentication");
     }
+
     const hashedPassword = await this.hashPassword(user.password);
-    const result = await this.pool.query(
-      `INSERT INTO users ("full_name", "email", "phone","birthday", "user_role", "password") VALUES ($1, $2, $3, $4, $5, $6) RETURNING
-         id,
-         "full_name",
-         "email",
-         "phone",
-         "birthday",
-         "user_role"`,
-      [user.full_name, user.email, user.phone, user.birthday, user.user_role, hashedPassword],
-    );
-    return result.rows[0];
+
+    if (user.user_role === "customeradmin") {
+      if (!user.domain) throw new Error("Domain is required for customer admins");
+
+      // Ensure domain is unique
+      const domainCheck = await this.pool.query(
+        "SELECT id FROM users WHERE domain = $1 AND user_role = $2",
+        [user.domain, "customeradmin"],
+      );
+      if ((domainCheck.rowCount ?? 0) > 0) {
+        throw new Error("Domain already exists for another customer admin");
+      }
+
+      const result = await this.pool.query(
+        `INSERT INTO users (full_name, email, phone, birthday, user_role, password, domain)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, full_name, email, phone, birthday, user_role, domain`,
+        [
+          user.full_name,
+          user.email,
+          user.phone,
+          user.birthday,
+          user.user_role,
+          hashedPassword,
+          user.domain,
+        ],
+      );
+
+      return result.rows[0];
+    }
+
+    // Req should send header with the hostname e.g. "bmw"
+    if (user.user_role === "client") {
+      const subdomain = req.headers["x-tenant-domain"] as string | undefined;
+
+      if (!subdomain) {
+        throw new Error("Tenant subdomain is required");
+      }
+
+      const admin = await this.pool.query(
+        "SELECT id FROM users WHERE user_role = $1 AND domain = $2",
+        ["customeradmin", subdomain],
+      );
+
+      if (admin.rowCount === 0) {
+        throw new Error(`No customer admin found for subdomain: ${subdomain}`);
+      }
+
+      const result = await this.pool.query(
+        `INSERT INTO users (
+      full_name,
+      email,
+      phone,
+      birthday,
+      user_role,
+      password,
+      customer_admin_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id, full_name, email, phone, birthday, user_role, customer_admin_id`,
+        [
+          user.full_name,
+          user.email,
+          user.phone,
+          user.birthday,
+          user.user_role,
+          hashedPassword,
+          admin.rows[0].id,
+        ],
+      );
+
+      return result.rows[0];
+    }
+
+    throw new Error("Invalid or unsupported user role");
   }
 
   async update(email: string, user: IUser): Promise<IUser | null> {
