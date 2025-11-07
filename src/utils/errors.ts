@@ -18,3 +18,10 @@ export class EmailError extends Error {
     this.name = "EmailError";
   }
 }
+
+export class TenantNotFoundError extends Error {
+  constructor(domain: string) {
+    super(`No customer admin found for subdomain: ${domain}`);
+    this.name = "TenantNotFoundError";
+  }
+}

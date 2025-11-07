@@ -56,6 +56,12 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       type: "EmailError",
     });
   }
+  if (err.name === "TenantNotFoundError") {
+    return res.status(404).json({
+      message: err.message,
+      type: "TenantNotFoundError",
+    });
+  }
 
   // Default to 500 internal server error
   res.status(500).json({

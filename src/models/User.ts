@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import pool from "../config/database";
-import { Request } from "express";
+import { TenantNotFoundError } from "../utils/errors";
 
 dotenv.config();
 
@@ -125,7 +125,7 @@ export class User {
     return result.rows[0] || null;
   }
 
-  async create(user: IUser, req: Request): Promise<IUser> {
+  async create(user: IUser, subdomain?: string): Promise<IUser> {
     if (!user.password) {
       throw new Error("Password is required for local authentication");
     }
@@ -164,8 +164,6 @@ export class User {
 
     // Req should send header with the hostname e.g. "bmw"
     if (user.user_role === "client") {
-      const subdomain = req.headers["x-tenant-domain"] as string | undefined;
-
       if (!subdomain) {
         throw new Error("Tenant subdomain is required");
       }
@@ -176,7 +174,7 @@ export class User {
       );
 
       if (admin.rowCount === 0) {
-        throw new Error(`No customer admin found for subdomain: ${subdomain}`);
+        throw new TenantNotFoundError(subdomain);
       }
 
       const result = await this.pool.query(
