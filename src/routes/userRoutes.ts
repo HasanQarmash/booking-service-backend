@@ -12,12 +12,7 @@ const controller = new UserController(new User(pool));
 
 router.get("/", authenticate, controller.getAll.bind(controller));
 router.get("/:email", authenticate, controller.getByEmail.bind(controller));
-router.put(
-  "/:email",
-  authenticate,
-  validateUpdateUserInput,
-  controller.update.bind(controller),
-);
+router.put("/:email", authenticate, validateUpdateUserInput, controller.update.bind(controller));
 router.delete("/:email", authenticate, controller.delete.bind(controller));
 
 export default router;

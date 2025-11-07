@@ -142,9 +142,7 @@ describe("Authentication API Endpoints", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Password must be at least 8 characters long",
-      );
+      expect(res.body.message).toBe("Password must be at least 8 characters long");
     });
 
     it("should return 400 for invalid Palestinian phone number format", async () => {
@@ -237,9 +235,7 @@ describe("Authentication API Endpoints", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Missing required fields: email or password",
-      );
+      expect(res.body.message).toBe("Missing required fields: email or password");
     });
 
     it("should return 400 when password is missing", async () => {
@@ -249,18 +245,14 @@ describe("Authentication API Endpoints", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Missing required fields: email or password",
-      );
+      expect(res.body.message).toBe("Missing required fields: email or password");
     });
 
     it("should return 400 when both email and password are missing", async () => {
       const res = await request.post("/api/auth/login").send({});
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Missing required fields: email or password",
-      );
+      expect(res.body.message).toBe("Missing required fields: email or password");
     });
 
     it("should return 400 for incorrect password", async () => {
@@ -298,7 +290,7 @@ describe("Authentication API Endpoints", () => {
       expect(res.status).toBe(200);
       expect(res.body).toBeDefined();
       expect(res.body.message).toBe("Password reset link sent successfully");
-      
+
       // Verify token was stored in database
       const result = await pool.query(
         'SELECT "password_reset_token", "password_reset_expires" FROM users WHERE email = $1',
@@ -348,13 +340,13 @@ describe("Authentication API Endpoints", () => {
 
       expect(res1.status).toBe(200);
       expect(res2.status).toBe(200);
-      
+
       // Verify tokens in database are different by checking the timestamps
       const result = await pool.query(
         'SELECT "password_reset_token", "password_reset_expires" FROM users WHERE email = $1',
         [registeredUserEmail],
       );
-      
+
       // Token should exist and have been updated
       expect(result.rows[0].password_reset_token).toBeDefined();
       expect(result.rows[0].password_reset_expires).toBeDefined();
@@ -375,9 +367,7 @@ describe("Authentication API Endpoints", () => {
 
       expect(result.rows[0].password_reset_token).toBeDefined();
       expect(result.rows[0].password_reset_expires).toBeDefined();
-      expect(
-        new Date(result.rows[0].password_reset_expires).getTime(),
-      ).toBeGreaterThan(Date.now());
+      expect(new Date(result.rows[0].password_reset_expires).getTime()).toBeGreaterThan(Date.now());
     });
   });
 
@@ -472,10 +462,9 @@ describe("Authentication API Endpoints", () => {
       expect(res.status).toBe(201);
 
       // Check database for hashed password
-      const result = await pool.query(
-        "SELECT password FROM users WHERE email = $1",
-        ["hash.test@test.com"],
-      );
+      const result = await pool.query("SELECT password FROM users WHERE email = $1", [
+        "hash.test@test.com",
+      ]);
 
       const storedPassword = result.rows[0].password;
       expect(storedPassword).not.toBe(plainPassword);

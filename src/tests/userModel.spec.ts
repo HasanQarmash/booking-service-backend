@@ -54,10 +54,7 @@ describe("User Model", () => {
       await userModel.create(user);
 
       // Query database directly to check hashed password
-      const result = await pool.query(
-        'SELECT password FROM users WHERE email = $1',
-        [user.email]
-      );
+      const result = await pool.query("SELECT password FROM users WHERE email = $1", [user.email]);
 
       const storedPassword = result.rows[0].password;
       expect(storedPassword).toBeDefined();
@@ -138,7 +135,7 @@ describe("User Model", () => {
     beforeAll(async () => {
       // Ensure we have some users in the database
       await pool.query("DELETE FROM users WHERE email LIKE '%@getall.com'");
-      
+
       await userModel.create({
         full_name: "GetAll User 1",
         email: "user1@getall.com",
@@ -282,10 +279,9 @@ describe("User Model", () => {
       await userModel.update(testUserData.email, updateData);
 
       // Check database for hashed password
-      const result = await pool.query(
-        'SELECT password FROM users WHERE email = $1',
-        [testUserData.email]
-      );
+      const result = await pool.query("SELECT password FROM users WHERE email = $1", [
+        testUserData.email,
+      ]);
 
       const storedPassword = result.rows[0].password;
       expect(storedPassword).not.toBe(newPassword);
@@ -420,7 +416,7 @@ describe("User Model", () => {
       };
 
       await userModel.create(userToDelete);
-      
+
       // PostgreSQL email comparison is case-insensitive
       const result = await userModel.delete(userToDelete.email.toUpperCase());
 
@@ -452,7 +448,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
         authTestUser.password!,
-        authTestUser.user_role
+        authTestUser.user_role,
       );
 
       expect(authenticated).toBeDefined();
@@ -465,7 +461,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
         "WrongPassword123",
-        authTestUser.user_role
+        authTestUser.user_role,
       );
 
       expect(authenticated).toBeNull();
@@ -475,7 +471,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         "nonexistent@example.com",
         "SomePassword123",
-        "client"
+        "client",
       );
 
       expect(authenticated).toBeNull();
@@ -485,7 +481,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
         authTestUser.password!.toLowerCase(),
-        authTestUser.user_role
+        authTestUser.user_role,
       );
 
       expect(authenticated).toBeNull();
@@ -496,7 +492,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email.toUpperCase(),
         authTestUser.password!,
-        authTestUser.user_role
+        authTestUser.user_role,
       );
 
       // Should authenticate successfully regardless of email case
@@ -510,7 +506,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         authTestUser.email,
         "",
-        authTestUser.user_role
+        authTestUser.user_role,
       );
 
       expect(authenticated).toBeNull();
@@ -520,7 +516,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         "",
         authTestUser.password!,
-        authTestUser.user_role
+        authTestUser.user_role,
       );
 
       expect(authenticated).toBeNull();
@@ -539,7 +535,7 @@ describe("User Model", () => {
       const authenticated = await userModel.authenticate(
         specialPassUser.email,
         specialPassUser.password!,
-        specialPassUser.user_role
+        specialPassUser.user_role,
       );
 
       expect(authenticated).toBeDefined();
@@ -580,7 +576,7 @@ describe("User Model", () => {
 
       const result = await pool.query(
         'SELECT "password_reset_token", "password_reset_expires" FROM users WHERE email = $1',
-        [resetTestUser.email]
+        [resetTestUser.email],
       );
 
       const storedToken = result.rows[0].password_reset_token;
@@ -594,7 +590,7 @@ describe("User Model", () => {
 
       const result = await pool.query(
         'SELECT "password_reset_expires" FROM users WHERE email = $1',
-        [resetTestUser.email]
+        [resetTestUser.email],
       );
 
       const expiresAt = new Date(result.rows[0].password_reset_expires);
@@ -607,10 +603,10 @@ describe("User Model", () => {
 
     it("should generate different tokens for multiple requests", async () => {
       const token1 = await userModel.createPasswordResettoken(resetTestUser.email);
-      
+
       // Wait a bit to ensure different timestamps
       await new Promise((resolve) => setTimeout(resolve, 10));
-      
+
       const token2 = await userModel.createPasswordResettoken(resetTestUser.email);
 
       expect(token1).not.toBe(token2);
@@ -627,18 +623,14 @@ describe("User Model", () => {
       const token1 = await userModel.createPasswordResettoken(resetTestUser.email);
       const token2 = await userModel.createPasswordResettoken(resetTestUser.email);
 
-      const result = await pool.query(
-        'SELECT "password_reset_token" FROM users WHERE email = $1',
-        [resetTestUser.email]
-      );
+      const result = await pool.query('SELECT "password_reset_token" FROM users WHERE email = $1', [
+        resetTestUser.email,
+      ]);
 
       const storedHashedToken = result.rows[0].password_reset_token;
-      
+
       // Verify that the stored token is the hash of token2, not token1
-      const hash2 = crypto
-        .createHash("sha256")
-        .update(token2)
-        .digest("hex");
+      const hash2 = crypto.createHash("sha256").update(token2).digest("hex");
 
       expect(storedHashedToken).toBe(hash2);
     });
@@ -660,7 +652,7 @@ describe("User Model", () => {
 
       // Verify table still exists
       const tableCheck = await pool.query(
-        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')"
+        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')",
       );
       expect(tableCheck.rows[0].exists).toBe(true);
     });
@@ -713,14 +705,11 @@ describe("User Model", () => {
       await userModel.create(user);
 
       // Direct bcrypt comparison without pepper should fail
-      const result = await pool.query(
-        'SELECT password FROM users WHERE email = $1',
-        [user.email]
-      );
+      const result = await pool.query("SELECT password FROM users WHERE email = $1", [user.email]);
 
       const storedHash = result.rows[0].password;
       const directCompare = await bcrypt.compare(password, storedHash);
-      
+
       expect(directCompare).toBe(false); // Should fail without pepper
 
       // But authenticate should work (it uses pepper)
@@ -757,9 +746,7 @@ describe("User Model", () => {
         },
       ];
 
-      const createdUsers = await Promise.all(
-        users.map((user) => userModel.create(user))
-      );
+      const createdUsers = await Promise.all(users.map((user) => userModel.create(user)));
 
       expect(createdUsers.length).toBe(3);
       for (let i = 0; i < createdUsers.length; i++) {
@@ -772,9 +759,7 @@ describe("User Model", () => {
       }
 
       // Cleanup
-      await Promise.all(
-        users.map((user) => userModel.delete(user.email))
-      );
+      await Promise.all(users.map((user) => userModel.delete(user.email)));
     });
   });
 });

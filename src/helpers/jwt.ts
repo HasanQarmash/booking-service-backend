@@ -9,4 +9,3 @@ export const generateToken = <T extends object>(entity: T) => {
   const token = jwt.sign(entity, JWT_SECRET, options);
   return token;
 };
-

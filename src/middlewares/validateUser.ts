@@ -8,25 +8,14 @@ import {
   validatePassword,
 } from "../utils/validators";
 
-export const validateUserInput = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const validateUserInput = (req: Request, res: Response, next: NextFunction) => {
   try {
     const { full_name, email, phone, password } = req.body;
 
     // Check missing fields
-    const missing = getMissingFields(req.body, [
-      "full_name",
-      "email",
-      "phone",
-      "password",
-    ]);
+    const missing = getMissingFields(req.body, ["full_name", "email", "phone", "password"]);
     if (missing.length) {
-      return res
-        .status(400)
-        .json({ message: `Missing required fields: ${missing.join(", ")}` });
+      return res.status(400).json({ message: `Missing required fields: ${missing.join(", ")}` });
     }
 
     // Validate fields

@@ -69,9 +69,7 @@ describe("User & Auth API Endpoints", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Password must be at least 8 characters long"
-      );
+      expect(res.body.message).toBe("Password must be at least 8 characters long");
     });
 
     it("should return 400 for invalid Palestinian phone numbers", async () => {
@@ -85,7 +83,7 @@ describe("User & Auth API Endpoints", () => {
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe(
-        "Phone number is invalid. It must be a valid Palestinian phone number."
+        "Phone number is invalid. It must be a valid Palestinian phone number.",
       );
     });
 
@@ -189,7 +187,7 @@ describe("User & Auth API Endpoints", () => {
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe(
-        "Phone number is invalid. It must be a valid Palestinian phone number."
+        "Phone number is invalid. It must be a valid Palestinian phone number.",
       );
     });
 
@@ -204,9 +202,7 @@ describe("User & Auth API Endpoints", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Password must be at least 8 characters long"
-      );
+      expect(res.body.message).toBe("Password must be at least 8 characters long");
     });
 
     it("should return 404 if user does not exist during update", async () => {
@@ -244,4 +240,3 @@ describe("User & Auth API Endpoints", () => {
     });
   });
 });
-

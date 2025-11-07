@@ -36,7 +36,7 @@ describe("Checking the users table", () => {
       "is_email_verified",
       "status",
       "created_at",
-      "updated_at"
+      "updated_at",
     ];
 
     const result = await pool.query(
@@ -47,10 +47,9 @@ describe("Checking the users table", () => {
         AND table_name = 'users'
         AND column_name = ANY($1)
       `,
-      [columns]
+      [columns],
     );
 
     expect(Number(result.rows[0].col_count)).toBe(columns.length);
   });
 });
-

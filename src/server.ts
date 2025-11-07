@@ -22,29 +22,36 @@ validateEnv();
 const app: express.Application = express();
 const port: number = +process.env.PORT!;
 
-// CORS configuration - MUST be before other middleware
 const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    // Allow requests with no origin (like mobile apps, Postman, or same-origin)
+  origin: function (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) {
+    // Allow requests with no origin (Postman, same-origin, etc.)
+    if (!origin) return callback(null, true);
+
     const allowedOrigins = [
       process.env.FRONTEND_URL || "http://localhost:4200",
       "http://localhost:4200",
-      "http://127.0.0.1:4200"
+      "http://127.0.0.1:4200",
     ];
 
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // ✅ Allow any subdomain of localhost:4200 (e.g., test.localhost:4200)
+    const localhostSubdomainPattern = /^http:\/\/[a-z0-9-]+\.localhost:4200$/i;
+
+    if (allowedOrigins.includes(origin) || localhostSubdomainPattern.test(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`❌ Blocked by CORS: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   credentials: true,
-  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
-  preflightContinue: false
+  optionsSuccessStatus: 200,
+  preflightContinue: false,
 };
-
 // Apply CORS middleware FIRST
 app.use(cors(corsOptions));
 
@@ -65,9 +72,9 @@ app.use(
         connectSrc: ["'self'", "https://accounts.google.com"],
         frameSrc: ["'self'", "https://accounts.google.com"],
         fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-      }
-    }
-  })
+      },
+    },
+  }),
 );
 
 // Prevent HTTP Parameter Pollution
@@ -87,9 +94,9 @@ app.use(
       secure: process.env.NODE_ENV === "production" && process.env.USE_HTTPS === "true", // Only secure in production with HTTPS
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax"
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
     },
-  })
+  }),
 );
 
 // Initialize Passport

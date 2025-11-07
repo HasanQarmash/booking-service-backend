@@ -1,12 +1,12 @@
 import { Response } from "express";
 import { generateToken } from "../helpers/jwt";
-import { IUser } from "../models/User"; 
+import { IUser } from "../models/User";
 
 export const createSendToken = (
   user: IUser,
   statusCode: number,
   res: Response,
-  message: string = "Operation successful"
+  message: string = "Operation successful",
 ) => {
   const token = generateToken({
     id: user.id!,
@@ -39,4 +39,3 @@ export const createSendToken = (
     },
   });
 };
-

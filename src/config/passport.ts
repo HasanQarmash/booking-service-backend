@@ -46,11 +46,7 @@ passport.use(
           if (user) {
             // Link Google account to existing user
             const profilePic = profile.photos?.[0]?.value;
-            user = await User.linkGoogleAccount(
-              String(user.id),
-              profile.id,
-              profilePic
-            );
+            user = await User.linkGoogleAccount(String(user.id), profile.id, profilePic);
             return done(null, user);
           }
         }
@@ -71,8 +67,8 @@ passport.use(
       } catch (error) {
         return done(error as Error, false);
       }
-    }
-  )
+    },
+  ),
 );
 
 export default passport;

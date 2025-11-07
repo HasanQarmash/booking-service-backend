@@ -16,10 +16,7 @@ export class ValidationError extends Error {
  * @returns The parsed ID as a number
  * @throws ValidationError if the ID is invalid
  */
-export const parseId = (
-  idParam: string | undefined,
-  entityName: string
-): number => {
+export const parseId = (idParam: string | undefined, entityName: string): number => {
   if (!idParam || !/^\d+$/.test(idParam)) {
     throw new ValidationError(`Invalid ${entityName} id`);
   }
@@ -32,10 +29,7 @@ export const parseId = (
  * @param requiredFields - Array of required field names
  * @returns Array of missing field names
  */
-export const getMissingFields = (
-  data: Record<string, any>,
-  requiredFields: string[]
-): string[] => {
+export const getMissingFields = (data: Record<string, any>, requiredFields: string[]): string[] => {
   return requiredFields.filter((field) => !data[field]);
 };
 
@@ -50,7 +44,7 @@ export const validatePalestinePhone = (phone: string): boolean => {
   const regex = /^(?:\+970|0|\+972)?[5-9][0-9]{7,8}$/;
   if (!regex.test(cleaned)) {
     throw new ValidationError(
-      "Phone number is invalid. It must be a valid Palestinian phone number."
+      "Phone number is invalid. It must be a valid Palestinian phone number.",
     );
   }
   return true;
@@ -79,9 +73,7 @@ export const validateEmail = (email: string): boolean => {
  */
 export const validatePassword = (password: string, minLength = 8): boolean => {
   if (!password || password.length < minLength) {
-    throw new ValidationError(
-      `Password must be at least ${minLength} characters long`
-    );
+    throw new ValidationError(`Password must be at least ${minLength} characters long`);
   }
   return true;
 };
@@ -95,10 +87,7 @@ export const validatePassword = (password: string, minLength = 8): boolean => {
  */
 export const validateFullName = (fullName: string, minLength = 2): boolean => {
   if (!fullName || fullName.trim().length < minLength) {
-    throw new ValidationError(
-      `Full name must be at least ${minLength} characters long`
-    );
+    throw new ValidationError(`Full name must be at least ${minLength} characters long`);
   }
   return true;
 };
-

@@ -1,11 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { generateToken } from "../helpers/jwt";
 
-export const googleAuthCallback = (
-  req: Request,
-  res: Response,
-  _next: NextFunction
-) => {
+export const googleAuthCallback = (req: Request, res: Response, _next: NextFunction) => {
   try {
     const user = req.user as any;
 
@@ -21,12 +17,14 @@ export const googleAuthCallback = (
     });
 
     // Encode user data to pass to frontend
-    const userData = encodeURIComponent(JSON.stringify({
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      profile_picture: user.profile_picture,
-    }));
+    const userData = encodeURIComponent(
+      JSON.stringify({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        profile_picture: user.profile_picture,
+      }),
+    );
 
     // Redirect to frontend with token and user data
     // The frontend will store the token and redirect to the appropriate dashboard

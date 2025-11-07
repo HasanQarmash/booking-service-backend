@@ -37,10 +37,7 @@ export class User {
     return hash;
   }
 
-  private async comparePassword(
-    password: string,
-    hash: string,
-  ): Promise<boolean> {
+  private async comparePassword(password: string, hash: string): Promise<boolean> {
     const saltedPassword = password + this.pepper;
     return await bcrypt.compare(saltedPassword, hash);
   }
@@ -48,10 +45,7 @@ export class User {
   async createPasswordResettoken(email: string): Promise<string> {
     const resetToken = crypto.randomBytes(32).toString("hex");
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -76,9 +70,7 @@ export class User {
       [userId],
     );
   }
-  async findPasswordHashToken(
-    passwordResetToken: string,
-  ): Promise<IUser | null> {
+  async findPasswordHashToken(passwordResetToken: string): Promise<IUser | null> {
     const result = await this.pool.query(
       `SELECT
        id,
@@ -144,14 +136,7 @@ export class User {
          "phone",
          "birthday",
          "user_role"`,
-      [
-        user.full_name,
-        user.email,
-        user.phone,
-        user.birthday,
-        user.user_role,
-        hashedPassword,
-      ],
+      [user.full_name, user.email, user.phone, user.birthday, user.user_role, hashedPassword],
     );
     return result.rows[0];
   }
@@ -177,17 +162,11 @@ export class User {
     return result.rows[0] || null;
   }
   async delete(email: string): Promise<boolean> {
-    const result = await this.pool.query("DELETE FROM users WHERE email = $1", [
-      email,
-    ]);
+    const result = await this.pool.query("DELETE FROM users WHERE email = $1", [email]);
     return result.rowCount! > 0;
   }
 
-  async authenticate(
-    email: string,
-    password: string,
-    user_role: string,
-  ): Promise<IUser | null> {
+  async authenticate(email: string, password: string, user_role: string): Promise<IUser | null> {
     const result = await this.pool.query(
       `SELECT id, "full_name", "email", "phone", "password", "user_role"
         FROM users
@@ -303,14 +282,8 @@ export class User {
          "google_id" as "googleId",
          "auth_provider" as "authProvider",
          "profile_picture" as "profile_picture"`,
-      [
-        userData.full_name,
-        userData.email,
-        userData.googleId,
-        userData.profilePicture,
-      ],
+      [userData.full_name, userData.email, userData.googleId, userData.profilePicture],
     );
     return result.rows[0];
   }
 }
-

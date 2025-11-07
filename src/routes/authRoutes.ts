@@ -9,11 +9,7 @@ const router = Router();
 const authController = new AuthController(new User(pool));
 
 router.post("/login", authRateLimit, authController.login.bind(authController));
-router.post(
-  "/register",
-  validateUserInput,
-  authController.register.bind(authController),
-);
+router.post("/register", validateUserInput, authController.register.bind(authController));
 
 router.post("/request-reset", authController.forgotPassword.bind(authController));
 

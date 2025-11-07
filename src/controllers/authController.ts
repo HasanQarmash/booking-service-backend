@@ -2,11 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { User } from "../models/User";
 import { ValidationError } from "../utils/validators";
 import { asyncHandler } from "../middlewares/errorHandler";
-import {
-  DuplicateEmailError,
-  EmailError,
-  NotFoundError,
-} from "../utils/errors";
+import { DuplicateEmailError, EmailError, NotFoundError } from "../utils/errors";
 import { Email } from "../utils/email";
 import crypto from "crypto";
 import { createSendToken } from "../utils/createSendtoken";
@@ -63,9 +59,7 @@ export class AuthController {
     const user = await this.userModel.getByEmail(email);
     if (!user) throw new NotFoundError("User not found");
 
-    const resetToken = await this.userModel.createPasswordResettoken(
-      user.email,
-    );
+    const resetToken = await this.userModel.createPasswordResettoken(user.email);
     const resetURL = `${process.env.FRONTEND_URL}/customer/new-password?token=${resetToken}`;
 
     try {
@@ -81,9 +75,7 @@ export class AuthController {
 
       await this.userModel.clearResetToken(user.id!);
 
-      throw new EmailError(
-        "There was an error sending the password reset email.",
-      );
+      throw new EmailError("There was an error sending the password reset email.");
     }
   });
 
@@ -91,9 +83,7 @@ export class AuthController {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
-      throw new ValidationError(
-        "Missing required fields: token or newPassword",
-      );
+      throw new ValidationError("Missing required fields: token or newPassword");
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");

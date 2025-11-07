@@ -5,12 +5,7 @@ import { ValidationError } from "../utils/validators";
  * Centralized error handling middleware
  * Should be added as the last middleware in the application
  */
-export const errorHandler = (
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("Error occurred:", {
     message: err.message,
     stack: err.stack,

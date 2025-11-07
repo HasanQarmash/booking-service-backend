@@ -45,5 +45,4 @@ export class UserController {
 
     res.json({ message: "User deleted" });
   });
-
 }

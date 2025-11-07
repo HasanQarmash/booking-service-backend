@@ -98,4 +98,3 @@ export class Email {
     await this.send(subject, text, html);
   }
 }
-

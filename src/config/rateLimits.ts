@@ -6,11 +6,11 @@ export const authRateLimit = rateLimit({
   max: process.env.NODE_ENV === "test" ? 1000 : 5, // Disable rate limiting in test environment
   message: "Too many login attempts, please try again later.",
   standardHeaders: true, // Return rate limit info in headers
-  legacyHeaders: false,  // Disable old headers
+  legacyHeaders: false, // Disable old headers
   skip: (req) => {
     // Skip rate limiting for OPTIONS requests (CORS preflight)
     return req.method === "OPTIONS";
-  }
+  },
 });
 
 // General limiter for normal API routes
@@ -22,5 +22,5 @@ export const apiRateLimit = rateLimit({
   skip: (req) => {
     // Skip rate limiting for OPTIONS requests (CORS preflight)
     return req.method === "OPTIONS";
-  }
+  },
 });

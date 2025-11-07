@@ -14,7 +14,7 @@ router.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
-  })
+  }),
 );
 
 // Google OAuth callback
@@ -24,7 +24,7 @@ router.get(
     failureRedirect: "/api/auth/google/failure",
     session: true,
   }),
-  googleAuthCallback
+  googleAuthCallback,
 );
 
 // Success route (for API access)
