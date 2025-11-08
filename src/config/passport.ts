@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../models/User";
+import { User, UserOAuthService } from "../models/User";
 import pool from "./database";
 import { getEnv } from "./env";
 
@@ -14,7 +14,7 @@ passport.serializeUser((user: any, done) => {
 // Deserialize user from session
 passport.deserializeUser(async (id: string, done) => {
   try {
-    const user = await User.findById(id);
+    const user = await UserOAuthService.findById(id);
     done(null, user || false);
   } catch (error) {
     done(error, false);
@@ -33,7 +33,7 @@ passport.use(
     async (req, _accessToken, _refreshToken, profile, done) => {
       try {
         // Check if user already exists with this Google ID
-        let user = await User.findByGoogleId(profile.id);
+        let user = await UserOAuthService.findByGoogleId(profile.id);
 
         if (user) {
           return done(null, user);
@@ -42,12 +42,16 @@ passport.use(
         // Check if user exists with this email
         const email = profile.emails?.[0]?.value;
         if (email) {
-          user = await User.findByEmail(email);
+          user = await UserOAuthService.findByEmail(email);
 
           if (user) {
             // Link Google account to existing user
             const profilePic = profile.photos?.[0]?.value;
-            user = await User.linkGoogleAccount(String(user.id), profile.id, profilePic);
+            user = await UserOAuthService.linkGoogleAccount(
+              String(user.id),
+              profile.id,
+              profilePic,
+            );
             return done(null, user);
           }
         }
@@ -66,7 +70,7 @@ passport.use(
         if (profilePictureUrl) {
           newUserData.profilePicture = profilePictureUrl;
         }
-        user = await User.createGoogleUser(newUserData);
+        user = await UserOAuthService.createGoogleUser(newUserData);
 
         return done(null, user);
       } catch (error) {

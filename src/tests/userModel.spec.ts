@@ -6,6 +6,9 @@ import crypto from "crypto";
 describe("User Model", () => {
   const userModel = new User(pool);
   let testUserId: string;
+  let customerAdminId: string;
+  const testDomain = "testcorp";
+  
   const testUserData: IUser = {
     full_name: "Test User",
     email: "testuser@example.com",
@@ -16,7 +19,25 @@ describe("User Model", () => {
 
   beforeAll(async () => {
     // Clear test data before running tests
-    await pool.query("DELETE FROM users WHERE email LIKE '%@example.com'");
+    await pool.query("DELETE FROM users WHERE email LIKE '%@example.com' OR domain = $1", [testDomain]);
+    
+    // Create a customer admin for multi-tenant testing
+    const adminResult = await pool.query(
+      `INSERT INTO users (full_name, email, phone, password, user_role, domain, status, is_email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [
+        "Test Admin",
+        "admin@testcorp.com",
+        "0599000000",
+        "$2a$10$dummyhash",
+        "customeradmin",
+        testDomain,
+        "active",
+        true,
+      ],
+    );
+    customerAdminId = adminResult.rows[0].id;
   });
 
   afterAll(async () => {
@@ -29,7 +50,7 @@ describe("User Model", () => {
   // ============================================
   describe("create()", () => {
     it("should create a new user successfully", async () => {
-      const newUser = await userModel.create(testUserData);
+      const newUser = await userModel.create(testUserData, testDomain);
 
       expect(newUser).toBeDefined();
       expect(newUser.id).toBeDefined();
@@ -51,7 +72,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(user);
+      await userModel.create(user, testDomain);
 
       // Query database directly to check hashed password
       const result = await pool.query("SELECT password FROM users WHERE email = $1", [user.email]);
@@ -79,8 +100,8 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      const created1 = await userModel.create(user1);
-      const created2 = await userModel.create(user2);
+      const created1 = await userModel.create(user1, testDomain);
+      const created2 = await userModel.create(user2, testDomain);
 
       expect(created1.id).not.toBe(created2.id);
       expect(created1.email).not.toBe(created2.email);
@@ -95,7 +116,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await expectAsync(userModel.create(duplicateUser)).toBeRejected();
+      await expectAsync(userModel.create(duplicateUser, testDomain)).toBeRejected();
     });
 
     it("should handle special characters in user data", async () => {
@@ -107,7 +128,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      const created = await userModel.create(specialUser);
+      const created = await userModel.create(specialUser, testDomain);
 
       expect(created.full_name).toBe(specialUser.full_name);
       expect(created.email).toBe(specialUser.email);
@@ -122,7 +143,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      const created = await userModel.create(unicodeUser);
+      const created = await userModel.create(unicodeUser, testDomain);
 
       expect(created.full_name).toBe(unicodeUser.full_name);
     });
@@ -142,7 +163,7 @@ describe("User Model", () => {
         phone: "0598111111",
         password: "Password123",
         user_role: "client",
-      });
+      }, testDomain);
 
       await userModel.create({
         full_name: "GetAll User 2",
@@ -150,7 +171,7 @@ describe("User Model", () => {
         phone: "0598222222",
         password: "Password123",
         user_role: "client",
-      });
+      }, testDomain);
     });
 
     it("should retrieve all users from database", async () => {
@@ -236,7 +257,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(specialEmailUser);
+      await userModel.create(specialEmailUser, testDomain);
       const retrieved = await userModel.getByEmail(specialEmailUser.email);
 
       expect(retrieved).toBeDefined();
@@ -360,7 +381,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(userToDelete);
+      await userModel.create(userToDelete, testDomain);
       const result = await userModel.delete(userToDelete.email);
 
       expect(result).toBe(true);
@@ -393,8 +414,8 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(user1);
-      await userModel.create(user2);
+      await userModel.create(user1, testDomain);
+      await userModel.create(user2, testDomain);
 
       await userModel.delete(user1.email);
 
@@ -415,7 +436,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(userToDelete);
+      await userModel.create(userToDelete, testDomain);
 
       // PostgreSQL email comparison is case-insensitive
       const result = await userModel.delete(userToDelete.email.toUpperCase());
@@ -441,7 +462,7 @@ describe("User Model", () => {
     };
 
     beforeAll(async () => {
-      await userModel.create(authTestUser);
+      await userModel.create(authTestUser, testDomain);
     });
 
     it("should authenticate user with correct credentials", async () => {
@@ -449,6 +470,7 @@ describe("User Model", () => {
         authTestUser.email,
         authTestUser.password!,
         authTestUser.user_role,
+        testDomain,
       );
 
       expect(authenticated).toBeDefined();
@@ -462,6 +484,7 @@ describe("User Model", () => {
         authTestUser.email,
         "WrongPassword123",
         authTestUser.user_role,
+        testDomain,
       );
 
       expect(authenticated).toBeNull();
@@ -472,6 +495,7 @@ describe("User Model", () => {
         "nonexistent@example.com",
         "SomePassword123",
         "client",
+        testDomain,
       );
 
       expect(authenticated).toBeNull();
@@ -482,6 +506,7 @@ describe("User Model", () => {
         authTestUser.email,
         authTestUser.password!.toLowerCase(),
         authTestUser.user_role,
+        testDomain,
       );
 
       expect(authenticated).toBeNull();
@@ -493,6 +518,7 @@ describe("User Model", () => {
         authTestUser.email.toUpperCase(),
         authTestUser.password!,
         authTestUser.user_role,
+        testDomain,
       );
 
       // Should authenticate successfully regardless of email case
@@ -507,6 +533,7 @@ describe("User Model", () => {
         authTestUser.email,
         "",
         authTestUser.user_role,
+        testDomain,
       );
 
       expect(authenticated).toBeNull();
@@ -517,6 +544,7 @@ describe("User Model", () => {
         "",
         authTestUser.password!,
         authTestUser.user_role,
+        testDomain,
       );
 
       expect(authenticated).toBeNull();
@@ -531,11 +559,12 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(specialPassUser);
+      await userModel.create(specialPassUser, testDomain);
       const authenticated = await userModel.authenticate(
         specialPassUser.email,
         specialPassUser.password!,
         specialPassUser.user_role,
+        testDomain,
       );
 
       expect(authenticated).toBeDefined();
@@ -560,7 +589,7 @@ describe("User Model", () => {
     };
 
     beforeAll(async () => {
-      await userModel.create(resetTestUser);
+      await userModel.create(resetTestUser, testDomain);
     });
 
     it("should create password reset token successfully", async () => {
@@ -667,7 +696,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      const created = await userModel.create(user);
+      const created = await userModel.create(user, testDomain);
       expect(created.email).toBe(longEmail);
 
       // Cleanup
@@ -685,7 +714,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      const created = await userModel.create(user);
+      const created = await userModel.create(user, testDomain);
       expect(created.full_name).toBe(longName);
 
       // Cleanup
@@ -702,7 +731,7 @@ describe("User Model", () => {
         user_role: "client",
       };
 
-      await userModel.create(user);
+      await userModel.create(user, testDomain);
 
       // Direct bcrypt comparison without pepper should fail
       const result = await pool.query("SELECT password FROM users WHERE email = $1", [user.email]);
@@ -713,7 +742,7 @@ describe("User Model", () => {
       expect(directCompare).toBe(false); // Should fail without pepper
 
       // But authenticate should work (it uses pepper)
-      const authenticated = await userModel.authenticate(user.email, password, user.user_role);
+      const authenticated = await userModel.authenticate(user.email, password, user.user_role, testDomain);
       expect(authenticated).not.toBeNull();
       expect(authenticated!.email).toBe(user.email);
 
@@ -746,7 +775,7 @@ describe("User Model", () => {
         },
       ];
 
-      const createdUsers = await Promise.all(users.map((user) => userModel.create(user)));
+      const createdUsers = await Promise.all(users.map((user) => userModel.create(user, testDomain)));
 
       expect(createdUsers.length).toBe(3);
       for (let i = 0; i < createdUsers.length; i++) {

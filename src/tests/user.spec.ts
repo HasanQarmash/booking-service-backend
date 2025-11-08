@@ -7,16 +7,36 @@ const request = supertest(app);
 describe("User & Auth API Endpoints", () => {
   let userEmail: string;
   let authToken: string;
+  let customerAdminId: string;
+  const testDomain = "testcorp";
 
   beforeAll(async () => {
     // Clear the users table before tests
     await pool.query("DELETE FROM users;");
+    
+    // Create a customer admin for multi-tenant testing
+    const adminResult = await pool.query(
+      `INSERT INTO users (full_name, email, phone, password, user_role, domain, status, is_email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [
+        "Test Admin",
+        "admin@testcorp.com",
+        "0599000000",
+        "$2a$10$dummyhash",
+        "customeradmin",
+        testDomain,
+        "active",
+        true,
+      ],
+    );
+    customerAdminId = adminResult.rows[0].id;
   });
 
   // ---------------- AUTH TESTS ----------------
   describe("POST /api/auth/register - Register User", () => {
     it("should register a new user successfully", async () => {
-      const res = await request.post("/api/auth/register").send({
+      const res = await request.post("/api/auth/register").set("x-tenant-domain", testDomain).send({
         full_name: "Alice",
         email: "example@test.com",
         phone: "0599123456",
@@ -36,7 +56,7 @@ describe("User & Auth API Endpoints", () => {
     });
 
     it("should return 400 when trying to register with an existing email", async () => {
-      const res = await request.post("/api/auth/register").send({
+      const res = await request.post("/api/auth/register").set("x-tenant-domain", testDomain).send({
         full_name: "Duplicate Alice",
         email: "example@test.com",
         phone: "0599111111",
@@ -45,11 +65,11 @@ describe("User & Auth API Endpoints", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Email already exists");
+      expect(res.body.message).toBe("Email already exists under this customer admin");
     });
 
     it("should return 400 when required fields are missing", async () => {
-      const res = await request.post("/api/auth/register").send({
+      const res = await request.post("/api/auth/register").set("x-tenant-domain", testDomain).send({
         email: "missing@test.com",
         user_role: "client",
         password: "new_password",
@@ -60,7 +80,7 @@ describe("User & Auth API Endpoints", () => {
     });
 
     it("should return 400 when password is less than 8 characters", async () => {
-      const res = await request.post("/api/auth/register").send({
+      const res = await request.post("/api/auth/register").set("x-tenant-domain", testDomain).send({
         full_name: "Bob",
         email: "bob@test.com",
         phone: "0599234567",
@@ -73,7 +93,7 @@ describe("User & Auth API Endpoints", () => {
     });
 
     it("should return 400 for invalid Palestinian phone numbers", async () => {
-      const res = await request.post("/api/auth/register").send({
+      const res = await request.post("/api/auth/register").set("x-tenant-domain", testDomain).send({
         full_name: "Charlie",
         email: "charlie@test.com",
         phone: "0123456789", // Invalid
@@ -88,7 +108,7 @@ describe("User & Auth API Endpoints", () => {
     });
 
     it("should return 400 for invalid email format", async () => {
-      const res = await request.post("/api/auth/register").send({
+      const res = await request.post("/api/auth/register").set("x-tenant-domain", testDomain).send({
         full_name: "Dana",
         email: "invalid-email",
         phone: "0599123456",
@@ -103,7 +123,7 @@ describe("User & Auth API Endpoints", () => {
 
   describe("POST /api/auth/login - Authenticate User", () => {
     it("should login successfully with valid credentials", async () => {
-      const res = await request.post("/api/auth/login").send({
+      const res = await request.post("/api/auth/login").set("x-tenant-domain", testDomain).send({
         email: "example@test.com",
         password: "hashed_password_123",
         user_role: "client",
@@ -115,7 +135,7 @@ describe("User & Auth API Endpoints", () => {
     });
 
     it("should return 400 if email or password missing", async () => {
-      const res = await request.post("/api/auth/login").send({
+      const res = await request.post("/api/auth/login").set("x-tenant-domain", testDomain).send({
         email: "",
         password: "",
         user_role: "client",
@@ -126,7 +146,7 @@ describe("User & Auth API Endpoints", () => {
     });
 
     it("should return 400 for invalid credentials", async () => {
-      const res = await request.post("/api/auth/login").send({
+      const res = await request.post("/api/auth/login").set("x-tenant-domain", testDomain).send({
         email: "example@test.com",
         password: "wrongpassword",
         user_role: "client",
