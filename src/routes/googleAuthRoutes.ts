@@ -12,6 +12,14 @@ const router = Router();
 // Initiate Google OAuth
 router.get(
   "/google",
+  (req, res, next) => {
+    // Store the role in session for use in callback
+    const role = req.query.role as string || 'client';
+    if (req.session) {
+      (req.session as any).oauthRole = role;
+    }
+    next();
+  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
   }),

@@ -8,7 +8,7 @@ import crypto from "crypto";
 import { createSendToken } from "../utils/createSendtoken";
 
 export class AuthController {
-  constructor(private userModel: User) {}
+  constructor(private userModel: User) { }
 
   register = asyncHandler(async (req, res) => {
     try {

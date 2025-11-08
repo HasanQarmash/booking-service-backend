@@ -28,8 +28,9 @@ passport.use(
       clientID: getEnv("GOOGLE_CLIENT_ID"),
       clientSecret: getEnv("GOOGLE_CLIENT_SECRET"),
       callbackURL: getEnv("GOOGLE_CALLBACK_URL"),
+      passReqToCallback: true, // Pass request to callback to access session
     },
-    async (_accessToken, _refreshToken, profile, done) => {
+    async (req, _accessToken, _refreshToken, profile, done) => {
       try {
         // Check if user already exists with this Google ID
         let user = await User.findByGoogleId(profile.id);
@@ -51,12 +52,16 @@ passport.use(
           }
         }
 
+        // Get role from session (stored when initiating OAuth)
+        const role = (req.session as any)?.oauthRole || 'client';
+
         // Create new user with Google account
         const profilePictureUrl = profile.photos?.[0]?.value;
         const newUserData: any = {
           googleId: profile.id,
           email: email || "",
           full_name: profile.displayName,
+          user_role: role, // Include the role
         };
         if (profilePictureUrl) {
           newUserData.profilePicture = profilePictureUrl;

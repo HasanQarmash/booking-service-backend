@@ -31,7 +31,7 @@ export class User {
   private pepper = process.env.BCRYPT_PASSWORD || "";
   private saltRounds = parseInt(process.env.SALT_ROUNDS || "10", 10);
 
-  constructor(public pool: Pool) {}
+  constructor(public pool: Pool) { }
   private async hashPassword(password: string): Promise<string> {
     const saltedPassword = password + this.pepper;
     const salt = await bcrypt.genSalt(this.saltRounds);
@@ -406,16 +406,19 @@ export class User {
     email: string;
     full_name: string;
     profilePicture?: string | undefined;
+    user_role?: string;
   }): Promise<IUser> {
+    const role = userData.user_role || 'client'; // Default to 'client' if not specified
     const result = await pool.query(
       `INSERT INTO users (
          "full_name",
          "email",
          "google_id",
          "auth_provider",
-         "profile_picture"
+         "profile_picture",
+         "user_role"
        )
-       VALUES ($1, $2, $3, 'google', $4)
+       VALUES ($1, $2, $3, 'google', $4, $5)
        RETURNING
          id,
          "full_name",
@@ -423,8 +426,9 @@ export class User {
          "phone",
          "google_id" as "googleId",
          "auth_provider" as "authProvider",
-         "profile_picture" as "profile_picture"`,
-      [userData.full_name, userData.email, userData.googleId, userData.profilePicture],
+         "profile_picture" as "profile_picture",
+         "user_role"`,
+      [userData.full_name, userData.email, userData.googleId, userData.profilePicture, role],
     );
     return result.rows[0];
   }

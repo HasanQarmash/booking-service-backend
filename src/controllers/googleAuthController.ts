@@ -9,6 +9,9 @@ export const googleAuthCallback = (req: Request, res: Response, _next: NextFunct
       return res.redirect(`${process.env.FRONTEND_URL}/customer/login?error=auth_failed`);
     }
 
+    // Get role from session (stored when initiating OAuth)
+    const role = (req.session as any)?.oauthRole || 'client';
+
     // Generate JWT token
     const token = generateToken({
       id: user.id,
@@ -23,13 +26,18 @@ export const googleAuthCallback = (req: Request, res: Response, _next: NextFunct
         full_name: user.full_name,
         email: user.email,
         profile_picture: user.profile_picture,
+        user_role: user.user_role || role, // Include user role from DB or session
       }),
     );
 
-    // Redirect to frontend with token and user data
-    // The frontend will store the token and redirect to the appropriate dashboard
+    // Clean up session
+    if (req.session) {
+      delete (req.session as any).oauthRole;
+    }
+
+    // Redirect to frontend with token, user data, and role
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4200";
-    res.redirect(`${frontendUrl}/auth/google/callback?token=${token}&user=${userData}`);
+    res.redirect(`${frontendUrl}/auth/google/callback?token=${token}&user=${userData}&role=${role}`);
   } catch (error) {
     console.error("Google auth callback error:", error);
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4200";

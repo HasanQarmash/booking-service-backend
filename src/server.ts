@@ -4,6 +4,7 @@ import hpp from "hpp";
 import userRoutes from "./routes/userRoutes";
 import authRoutes from "./routes/authRoutes";
 import googleAuthRoutes from "./routes/googleAuthRoutes";
+import bookingRoutes from "./routes/bookingRoutes";
 import dotenv from "dotenv";
 import { validateEnv } from "./config/env";
 import { connectDB } from "./config/database";
@@ -128,6 +129,7 @@ app.get("/api/test", (_req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 console.log("📍 Registered routes:");
 console.log(" - GET /");
@@ -135,6 +137,7 @@ console.log(" - GET /api/test");
 console.log(" - /api/auth (authRoutes)");
 console.log(" - /api/auth (googleAuthRoutes)");
 console.log(" - /api/users (userRoutes)");
+console.log(" - /api/bookings (bookingRoutes)");
 
 // 404 handler (must come after all routes)
 app.use((req: Request, res: Response) => {
