@@ -16,12 +16,18 @@ export class AuthController {
 
       const newUser = await this.userModel.create(req.body, subdomain);
 
-      // 2️⃣ Generate a frontend URL (for example, dashboard or welcome page)
-      const welcomeUrl = `${process.env.FRONTEND_URL}/customer/welcome`;
+      // Build tenant-specific frontend URL
+      let frontendBase = process.env.FRONTEND_URL || ""; // e.g. https://myapp.com
+
+      // Remove protocol to safely inject subdomain
+      const baseUrl = frontendBase.replace(/^https?:\/\//, "");
+
+      // Construct full tenant URL (e.g., https://bmw.myapp.com)
+      const tenantFrontendUrl = `https://${subdomain}.${baseUrl}/customer/welcome`;
 
       // 3️⃣ Send a welcome email (non-blocking)
       try {
-        const emailService = new Email(newUser, welcomeUrl);
+        const emailService = new Email(newUser, tenantFrontendUrl);
         await emailService.sendWelcome();
       } catch (err: any) {
         console.error("⚠️ Failed to send welcome email:", err.message);
@@ -31,7 +37,13 @@ export class AuthController {
       createSendToken(newUser, 201, res, "User registered successfully");
     } catch (error: any) {
       if (error.code === "23505") {
-        throw new DuplicateEmailError("Email already exists");
+        if (error.constraint === "unique_client_email_per_admin") {
+          throw new ValidationError("Email already exists under this customer admin");
+        }
+        if (error.constraint === "unique_admin_email_per_domain") {
+          throw new ValidationError("Email already exists under this domain");
+        }
+        throw new ValidationError("Email already exists");
       }
       throw error;
     }
@@ -39,12 +51,13 @@ export class AuthController {
 
   login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password, user_role } = req.body;
+    const subdomain = (req.headers["x-tenant-domain"] as string | undefined)?.toLowerCase();
 
     if (!email || !password || !user_role) {
       throw new ValidationError("Missing required fields: email or password");
     }
 
-    const user = await this.userModel.authenticate(email, password, user_role);
+    const user = await this.userModel.authenticate(email, password, user_role, subdomain);
     if (!user) {
       throw new ValidationError("Invalid credentials");
     }
@@ -52,30 +65,50 @@ export class AuthController {
     createSendToken(user, 200, res, "Login successful");
   });
 
-  forgotPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
+  forgotPassword = asyncHandler(async (req, res) => {
+    const { email, user_role, domain } = req.body;
 
-    if (!email) throw new ValidationError("Missing required fields: email");
+    if (!email) throw new ValidationError("Missing required field: email");
+    if (!user_role) throw new ValidationError("Missing required field: user_role");
 
-    const user = await this.userModel.getByEmail(email);
+    let user = null;
+    const subdomain = (req.headers["x-tenant-domain"] as string | undefined)?.toLowerCase();
+
+    if (user_role === "client") {
+      if (!subdomain)
+        throw new ValidationError("Missing tenant subdomain (x-tenant-domain header)");
+
+      const admin = await this.userModel.findCustomerAdminByDomain(subdomain);
+      if (!admin) throw new NotFoundError(`Tenant '${subdomain}' not found`);
+
+      user = await this.userModel.getClientByEmailAndAdmin(email, admin.id!);
+    } else if (user_role === "customeradmin") {
+      if (!domain) throw new ValidationError("Domain is required for customer admins");
+      user = await this.userModel.getCustomerAdminByEmailAndDomain(email, domain);
+    } else if (user_role === "administrator") {
+      user = await this.userModel.getByEmailAndRole(email, "administrator");
+    }
+
     if (!user) throw new NotFoundError("User not found");
 
     const resetToken = await this.userModel.createPasswordResettoken(user.email);
-    const resetURL = `${process.env.FRONTEND_URL}/customer/new-password?token=${resetToken}`;
+
+    const frontendBase = process.env.FRONTEND_URL || "https://myapp.com";
+    const baseUrl = frontendBase.replace(/^https?:\/\//, "");
+
+    const resetURL = domain
+      ? `https://${domain}.${baseUrl}/customer/new-password?token=${resetToken}`
+      : subdomain
+        ? `https://${subdomain}.${baseUrl}/customer/new-password?token=${resetToken}`
+        : `${frontendBase}/customer/new-password?token=${resetToken}`;
 
     try {
-      // 📨 Use the Email class
       const emailService = new Email(user, resetURL);
       await emailService.sendPasswordReset();
-
-      res.status(200).json({
-        message: "Password reset link sent successfully",
-      });
+      res.status(200).json({ message: "Password reset link sent successfully" });
     } catch (error: any) {
       console.error("❌ Email sending failed:", error.message);
-
       await this.userModel.clearResetToken(user.id!);
-
       throw new EmailError("There was an error sending the password reset email.");
     }
   });

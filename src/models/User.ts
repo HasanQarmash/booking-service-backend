@@ -230,22 +230,100 @@ export class User {
     return result.rowCount! > 0;
   }
 
-  async authenticate(email: string, password: string, user_role: string): Promise<IUser | null> {
+  async authenticate(
+    email: string,
+    password: string,
+    user_role: string,
+    subdomain?: string,
+  ): Promise<IUser | null> {
+    if (user_role === "client") {
+      if (!subdomain) throw new Error("Tenant subdomain is required");
+
+      // 1️⃣ Find the customer admin for that subdomain
+      const admin = await this.pool.query(
+        `SELECT id FROM users WHERE domain = $1 AND user_role = 'customeradmin'`,
+        [subdomain],
+      );
+
+      if (admin.rowCount === 0) {
+        throw new Error(`Tenant '${subdomain}' not found`);
+      }
+
+      const customer_admin_id = admin.rows[0].id;
+
+      // 2️⃣ Find the client under that admin
+      const result = await this.pool.query(
+        `SELECT id, full_name, email, phone, password, user_role
+       FROM users
+       WHERE email = $1 AND customer_admin_id = $2 AND user_role = 'client'`,
+        [email, customer_admin_id],
+      );
+
+      const user = result.rows[0];
+      if (user && (await this.comparePassword(password, user.password))) {
+        return user;
+      }
+
+      return null;
+    }
+
     const result = await this.pool.query(
-      `SELECT id, "full_name", "email", "phone", "password", "user_role"
-        FROM users
-        WHERE "email" = $1 and "user_role" = $2`,
+      `SELECT id, full_name, email, phone, password, user_role
+     FROM users
+     WHERE email = $1 AND user_role = $2`,
       [email, user_role],
     );
 
     const user = result.rows[0];
-
     if (user && (await this.comparePassword(password, user.password))) {
       return user;
     }
+
     return null;
   }
+  /** Find tenant (customer admin) by domain name */
+  async findCustomerAdminByDomain(domain: string): Promise<IUser | null> {
+    const result = await this.pool.query(
+      `SELECT id, full_name, email, phone, user_role, domain
+       FROM users
+       WHERE domain = $1 AND user_role = 'customeradmin'`,
+      [domain],
+    );
+    return result.rows[0] || null;
+  }
 
+  /** Find a client under a specific tenant (customer admin) by email */
+  async getClientByEmailAndAdmin(email: string, adminId: string): Promise<IUser | null> {
+    const result = await this.pool.query(
+      `SELECT id, full_name, email, phone, user_role, customer_admin_id
+       FROM users
+       WHERE email = $1 AND customer_admin_id = $2 AND user_role = 'client'`,
+      [email, adminId],
+    );
+    return result.rows[0] || null;
+  }
+
+  /** Find a customer admin by their email and domain */
+  async getCustomerAdminByEmailAndDomain(email: string, domain: string): Promise<IUser | null> {
+    const result = await this.pool.query(
+      `SELECT id, full_name, email, phone, user_role, domain
+       FROM users
+       WHERE email = $1 AND domain = $2 AND user_role = 'customeradmin'`,
+      [email, domain],
+    );
+    return result.rows[0] || null;
+  }
+
+  /** Find any user by email and role (for administrators, etc.) */
+  async getByEmailAndRole(email: string, role: string): Promise<IUser | null> {
+    const result = await this.pool.query(
+      `SELECT id, full_name, email, phone, user_role
+       FROM users
+       WHERE email = $1 AND user_role = $2`,
+      [email, role],
+    );
+    return result.rows[0] || null;
+  }
   // ============= Google OAuth Static Methods =============
 
   static async findById(id: string): Promise<IUser | null> {
