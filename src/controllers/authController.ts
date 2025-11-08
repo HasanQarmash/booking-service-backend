@@ -16,18 +16,28 @@ export class AuthController {
 
       const newUser = await this.userModel.create(req.body, subdomain);
 
-      // Build tenant-specific frontend URL
-      let frontendBase = process.env.FRONTEND_URL || ""; // e.g. https://myapp.com
-
-      // Remove protocol to safely inject subdomain
+      const frontendBase = process.env.FRONTEND_URL || "https://myapp.com";
       const baseUrl = frontendBase.replace(/^https?:\/\//, "");
 
-      // Construct full tenant URL (e.g., https://bmw.myapp.com)
-      const tenantFrontendUrl = `https://${subdomain}.${baseUrl}/customer/welcome`;
+      const isLocalhost = baseUrl.includes("localhost");
+      const protocol = isLocalhost ? "http" : "https";
+
+      let welcomePath = "/customer";
+      if (newUser.user_role === "customeradmin") welcomePath = "/admin/dashboard";
+      else if (newUser.user_role === "administrator") welcomePath = "/admin/welcome";
+
+      let welcomeUrl: string;
+      if (newUser.user_role === "client" && subdomain) {
+        // Clients: use subdomain (tenant)
+        welcomeUrl = `${protocol}://${subdomain}.${baseUrl}${welcomePath}`;
+      } else {
+        // Customer admins & admins: use main domain
+        welcomeUrl = `${frontendBase}${welcomePath}`;
+      }
 
       // 3️⃣ Send a welcome email (non-blocking)
       try {
-        const emailService = new Email(newUser, tenantFrontendUrl);
+        const emailService = new Email(newUser, welcomeUrl);
         await emailService.sendWelcome();
       } catch (err: any) {
         console.error("⚠️ Failed to send welcome email:", err.message);
@@ -94,13 +104,28 @@ export class AuthController {
     const resetToken = await this.userModel.createPasswordResettoken(user.email);
 
     const frontendBase = process.env.FRONTEND_URL || "https://myapp.com";
+
     const baseUrl = frontendBase.replace(/^https?:\/\//, "");
 
-    const resetURL = domain
-      ? `https://${domain}.${baseUrl}/customer/new-password?token=${resetToken}`
-      : subdomain
-        ? `https://${subdomain}.${baseUrl}/customer/new-password?token=${resetToken}`
-        : `${frontendBase}/customer/new-password?token=${resetToken}`;
+    let resetPath = "/customer/new-password";
+    if (user_role === "customeradmin") resetPath = "/customeradmin/new-password";
+    else if (user_role === "administrator") resetPath = "/admin/new-password";
+
+    const isLocalhost = baseUrl.includes("localhost");
+    const protocol = isLocalhost ? "http" : "https";
+
+    let resetURL: string;
+
+    if (user_role === "client" && subdomain) {
+      // Clients: subdomain-based link
+      resetURL = `${protocol}://${subdomain}.${baseUrl}${resetPath}?token=${resetToken}`;
+    } else if (user_role === "customeradmin" || user_role === "administrator") {
+      // Customer admins + system admins: always use main domain
+      resetURL = `${frontendBase}${resetPath}?token=${resetToken}`;
+    } else {
+      // Fallback (no subdomain, probably dev mode)
+      resetURL = `${frontendBase}${resetPath}?token=${resetToken}`;
+    }
 
     try {
       const emailService = new Email(user, resetURL);
